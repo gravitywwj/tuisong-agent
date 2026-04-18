@@ -1,35 +1,34 @@
-# 🤖 个人文献处理助手指南 (Agent Workflow)
+# 🤖 Personal Literature Agent Workflow
 
-这是一套轻量级的个人文献阅读与总结工作流，旨在指导 AI 编程助手（如 Codex、Cursor、Copilot）处理由 MinerU 提取的学术论文。
+This is a lightweight personal workflow for reading and summarizing literature. It is designed to guide AI coding assistants (such as Codex, Cursor, and Copilot) in processing academic papers extracted by MinerU.
 
-## 📌 目标说明
-作为 AI 助手，你的任务是读取 MinerU 提取的长篇 Markdown 论文，将其转换为一份结构清晰、基于第三人称视角的学术阅读笔记，并确保文中引用的图表链接绝不造假。
+## 📌 Objective
+As an AI assistant, your task is to read lengthy Markdown papers extracted by MinerU and convert them into well-structured, highly professional academic reading notes **in Chinese**, written strictly from a third-person perspective. You must also ensure that all charts/images referenced in the text are absolutely authentic and never hallucinated.
 
-## 📁 目录约定
-- **输入目录**: `data/input/{paper_folder}/` (内含论文原始的 `full.md` 及提取的 `images/` 图像文件夹)
-- **输出目录**: `data/output/{paper_id}_summary.md`
+## 📁 Directory Convention
+- **Input Directory**: `data/input/{paper_folder}/` (Contains the original `full.md` and the extracted `images/` folder).
+- **Output Directory**: `data/output/{paper_id}_summary.md`
 
-## 🛠️ 执行步骤 (Agent Step-by-Step)
-当接收到用户的文献处理指令时，请按顺序执行：
+## 🛠️ Execution Steps (Agent Step-by-Step)
+Upon receiving a command from the user to process literature, execute the following steps in order:
 
-1. **阅读输入**: 
-   - 提取并阅读目标论文夹下的 `full.md` 文件。
-   - 通过 `ls` 或读取目录结构，了解 `images/` 下真实存在的图片文件名，以建立可靠的图像映射概念。
-2. **生成中文结构化总结**:
-   - **标题**: 输出中英文对照的标题，中文侧重环境科学领域的专业学术翻译。
-   - **摘要**: 对原文的 Abstract 摘要部分进行直接、忠实的中文学术翻译。保证原汁原味，不能随意删减骨架。唯一且最重要的一定是：在翻译时，严格将所有的第一人称表述（如我们、本文、本研究）替换为第三人称陈述（如该研究、文章、科研作者等）。
-   - **研究方法**: 详实而专业地描述核心研究框架、模型架构或实验设计。如果在原文档中找到了实验装置、流程图或公式图的对应图片，必须将其链接到这一段落辅助说明并辅以图注。
-   - **主要内容/核心发现**: 分 3-5 个逻辑小节。**绝对禁止使用口语化或夸张的修辞手法**（如“另辟蹊径”、“别出心裁”、“砍掉一半”等），必须全程使用极其严谨、客观、科学的学术界标准书面用语。**每一节的字数必须极尽详实，要求每节至少扩展至 500 个汉字左右**，深入拆解模型内部机制、极尽详细的定量数据结果、以及深刻的对比实验分析。高度依赖并引用相关结果图表。
-   - **排版风格**: 内容必须充实丰富、段落完整饱满，完全对标高质量顶刊文献的精读长文的标准。拒绝简单的要点罗列。
-3. **输出落盘**: 将最终整合完成的 Markdown 以 `{paper_id}_summary.md` 的命名保存到 `data/output/`。
+1. **Read Input**:
+   - Extract and read the `full.md` file in the target paper's folder.
+   - Use commands like `ls` or read the directory structure to obtain the exact names of the actual image files in the `images/` directory. This establishes a reliable mapping of available images.
+2. **Generate a Structured Summary (MUST BE IN CHINESE)**:
+   - **Title**: Provide a bilingual (English and Chinese) title. The Chinese translation must be highly professional and tailored to the respective academic field (e.g., environmental science).
+   - **Abstract**: Provide a direct, faithful academic translation of the original Abstract into Chinese. Keep the original essence without omitting the core structure. **Most importantly**: Strictly replace all 1st-person phrases (e.g., "we", "our study", "this paper") with 3rd-person academic narrations (e.g., "该研究", "科研作者", "文章指出").
+   - **Methodology**: Describe the core research framework, model architecture, or experimental design thoroughly and professionally. If corresponding images of experimental setups, flowcharts, or formulas are found in the original document, you **must** link them in this paragraph with appropriate captions.
+   - **Core Findings**: Divide into 3-5 logical subsections with clear subtitles. **Absolutely no colloquialisms or exaggerated rhetorical devices**. You MUST use extremely rigorous, objective, and scientific standard written academic language throughout. **Each subsection must be highly detailed and expanded to at least 500 Chinese characters**, deeply dissecting the internal mechanisms of the models, providing exhaustive quantitative data results, and offering profound comparative experimental analysis. Depend heavily on and cite relevant result charts/images.
+   - **Typography & Style**: The content must be rich, and paragraphs must be full and coherent. The quality should strictly align with the standard of an extensive, high-tier journal reading note. Refuse simple bullet-point lists.
+3. **Save Output**: Save the fully integrated Markdown summary as `{paper_id}_summary.md` in the `data/output/` directory.
 
-## ⚠️ 绝对避免的错误 (Mistakes to Avoid)
-
-这关乎总结的可用性，请严格遵守！
-1. **禁止捏造图表路径 (No Hallucinated Images)**: 
-   - 总结中引用的任何图片格式 `![图名](images/xxx.jpg)`，其对应路径必须**百分之百在原始的 `images/` 目录中真实存在**。
-   - 如果找不到符合的图片，请直接纯文本描述，**绝不能**生造诸如 `images/figure1.jpg` 这样虚假的路径名。
-2. **执行严格的第三人称学术陈述 (Enforce 3rd-Person Narration)**: 
-   - 原文常会有 "we found", "our study", "we propose"。
-   - 翻译和改写时，**严禁使用**："我们发现"、"我们的方法"、"本研究"、"本文"。
-   - **必须替换为**："该研究发现"、"所提方法"、"科研团队指出"、"该文章"。
+## ⚠️ Mistakes to Avoid (Absolute Directives)
+This directly impacts the document's usability. Strictly comply!
+1. **No Hallucinated Images**:
+   - For ANY image referenced in your summary using the format `![Caption](images/xxx.jpg)`, the corresponding path **MUST exist 100% authentically in the original `images/` directory**.
+   - If a suitable image cannot be found, use pure text descriptions instead. **NEVER** fabricate fake paths like `images/figure1.jpg`.
+2. **Enforce 3rd-Person Academic Narration**:
+   - Original papers often use "we found," "our study," or "we propose."
+   - When translating and rewriting into Chinese, **strictly prohibit** using first-person language such as: "我们发现" (we found), "我们的方法" (our method), "本研究" (this study), "本文" (this paper).
+   - **Must be replaced with**: "该研究发现" (the research found), "所提方法" (the proposed method), "科研团队指出" (the research team pointed out), "该文章" (the article).

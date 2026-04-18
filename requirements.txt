@@ -1,0 +1,3 @@
+magic-pdf[full]>=0.8.0  # MinerU 的核心依赖
+openai
+# 根据后续需求可以添加更多依赖

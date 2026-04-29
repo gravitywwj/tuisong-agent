@@ -22,7 +22,9 @@ Do not stop at explaining the workflow. Unless the user explicitly asks for a pl
 - Each input folder should contain:
   - `full.md`
   - `images/` with MinerU-extracted figures, tables, formulas, or page images
-- Output files must be written to `data/output/{paper_id}_summary.md`.
+- Markdown output files must be written to `data/output/{paper_id}_summary.md`.
+- Word output files must be written to `data/output/{paper_id}_summary.docx`.
+- The Word style reference template lives under `data/example format/` or `data/示例模板*/` and should be a `.docx` file.
 
 An eligible input folder is any direct child of `data/input/` that contains `full.md`.
 
@@ -33,6 +35,8 @@ An eligible input folder is any direct child of `data/input/` that contains `ful
 - If the user says a vague trigger such as "开始工作" and there is exactly one eligible folder, process it.
 - If the user says a vague trigger and there are multiple eligible folders, process every eligible folder that does not already have a matching output file.
 - If an output file already exists, skip it unless the user explicitly asks to overwrite or regenerate.
+- If the Markdown output already exists but the matching DOCX output is missing, reuse the existing Markdown and run only the DOCX conversion and DOCX validation steps.
+- If both Markdown and DOCX outputs already exist, skip them unless the user explicitly asks to overwrite or regenerate.
 - If no eligible folder exists, briefly explain the required structure and stop.
 
 ## Required Workflow
@@ -43,20 +47,32 @@ For each selected paper:
 2. List the exact files under `data/input/{paper_id}/images/`.
 3. Generate a Chinese structured academic reading note according to `AGENT_WORKFLOW.md`.
 4. Save the result as `data/output/{paper_id}_summary.md`.
-5. Run validation:
+5. Run Markdown validation:
    - `python src/check_images.py data/input/{paper_id}/images data/output/{paper_id}_summary.md`
    - `python src/check_phrases.py data/output/{paper_id}_summary.md`
+   - `python src/check_structure.py data/output/{paper_id}_summary.md`
    - or `python src/validate_output.py {paper_id}`
-6. If validation fails, revise the output and rerun validation before final response.
+6. If Markdown validation fails, revise the output and rerun validation before DOCX conversion.
+7. Convert the validated Markdown into a Word document:
+   - `python src/md_to_docx.py {paper_id}`
+8. Run DOCX validation:
+   - `python src/check_docx.py {paper_id}`
+9. If DOCX validation fails, revise the Markdown or conversion script output and rerun conversion plus validation before final response.
 
 ## Writing Standards
 
 - Output must be in Chinese unless the user explicitly asks otherwise.
 - Keep a rigorous academic tone.
+- Preserve the original English paper title exactly in the first H1. Provide a faithful professional Chinese translation in the second H1.
+- Keep section headings concise. Prefer short academic noun phrases over full-sentence headings.
+- Compress `主要内容` into no more than 4 logical subsections. Do not force one figure per subsection; each subsection may contain multiple related figures or tables when they support the same argument.
 - Rewrite first-person and author-perspective phrases into third-person academic narration.
 - Do not use "我们发现", "我们的方法", "本研究", or "本文".
 - Do not use colloquial, promotional, exaggerated, or self-media style phrasing unless the user explicitly asks for a lighter style.
 - When the user asks for "推送", produce clean Markdown suitable for publication while preserving the same academic rigor.
+- Do not write a standalone `环境意义` section.
+- End with a single `结论` section. Do not use headings such as `精读结论` or `精度结论`.
+- The conclusion should synthesize the paper's conceptual contribution and mechanism, not repeat prediction accuracy metrics.
 
 ## Image Rules
 
@@ -64,6 +80,17 @@ For each selected paper:
 - Before inserting any image reference, confirm that the filename exists in the input `images/` folder.
 - Markdown image links must use the format `![caption](images/exact_filename.ext)` unless the user asks for a different export layout.
 - If no reliable matching image exists, describe the result in text instead of inventing an image.
+- During DOCX conversion, insert each Markdown image at the same logical position as its Markdown reference and use the Markdown image caption as the centered figure caption.
+- If a reliable graphical abstract image is present in the MinerU input, insert it immediately after the Chinese abstract section in the DOCX output.
+
+## DOCX Formatting Rules
+
+- Use the reference `.docx` template only as a style source; do not leave the template paper title, DOI, body text, figures, cover image, or hidden media in generated outputs.
+- Do not auto-generate a cover. If MinerU does not provide a usable cover, leave the cover absent/blank so the user can add it manually later.
+- Preserve the template's A4 page setup, margins, Chinese/English font pairing, heading hierarchy, body indentation, line spacing, centered figure layout, and footer information style.
+- Generate `data/output/{paper_id}_summary.docx` from the validated Markdown.
+- Extract the paper title, Chinese title, DOI, and paper authors from the generated Markdown and original input files where available.
+- Replace the template DOI and title with the current paper metadata. If the DOI cannot be found, do not invent one.
 
 ## Final Response
 
@@ -72,4 +99,5 @@ After completing the workflow, report:
 - Which input folders were processed.
 - Which output files were created or updated.
 - Whether validation passed.
+- Whether DOCX conversion and DOCX validation passed.
 - Any skipped folders and the reason.

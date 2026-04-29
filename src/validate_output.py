@@ -3,6 +3,7 @@ from pathlib import Path
 
 from check_images import check_images
 from check_phrases import check_phrases
+from check_structure import check_structure
 
 
 def validate_paper(paper_id):
@@ -13,8 +14,9 @@ def validate_paper(paper_id):
     print(f"Validating paper: {paper_id}")
     image_status = check_images(images_dir, output_file)
     phrase_status = check_phrases(output_file)
+    structure_status = check_structure(output_file)
 
-    return 1 if image_status or phrase_status else 0
+    return 1 if image_status or phrase_status or structure_status else 0
 
 
 def find_output_papers():

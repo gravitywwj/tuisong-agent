@@ -14,29 +14,33 @@
 
 > 把 input 里的东西转化为推送
 
-Codex 会按照 `AGENTS.md` 的规则扫描 `data/input/` 下的论文文件夹，读取 `full.md` 和真实存在的 `images/` 文件，生成 `data/output/<编号>_summary.md`，并运行验证脚本检查图片链接与第一人称表述。
+Codex 会按照 `AGENTS.md` 的规则扫描 `data/input/` 下的论文文件夹，读取 `full.md` 和真实存在的 `images/` 文件，生成 `data/output/<编号>_summary.md`，运行 Markdown 验证后继续生成 `data/output/<编号>_summary.docx`，并检查 Word 文档中的标题、DOI、图文摘要与图片插入情况。
 
 ## 📂 仓库结构
 - **`AGENTS.md`**: Codex 自动执行入口，定义自然语言触发语、输入选择规则、输出约定、校验流程与图像引用规则。
 - **`data/input/`**: 输入区，放置 MinerU 提取好的论文文件夹（内含 `full.md` 和 `images/` 图片包）。
-- **`data/output/`**: 输出区，最终生成的阅读笔记会自动存于该目录。
+- **`data/output/`**: 输出区，最终生成的阅读笔记 Markdown 与 Word 文档会自动存于该目录。
 - **`data/README.md`**: 输入输出目录的结构说明。
 - **`AGENT_WORKFLOW.md`**: 🌟 核心控制指令（英文版），包含完整的文献处理与排版规范，强制约束模型的输出行为。
 - **`AGENT_WORKFLOW_zh.md`**: 中文版的工作流规范说明，供使用者参考。
-- **`src/`**: 包含两个轻量级的 Python 验证脚本，用于核验生成结果的准确性与格式合规性。
+- **`src/`**: 包含 Markdown 验证、DOCX 转换与 DOCX 验证脚本，用于核验生成结果的准确性与格式合规性。
+- **`DOCX_WORKFLOW.md`**: Word 转换流程与模板格式分析说明。
 
 ## 🚀 工作流：如何使用
 
 1. 将包含 `full.md` 及 `images/` 的文件夹放入 `data/input/`。
 2. 在 AI 助手对话框中输入指令：
    > "请遵循 `AGENT_WORKFLOW.md` 的规范，处理 `data/input/<编号>` 文件夹内的论文。"
-3. 检查 `data/output/` 下生成的总结文档。
-4. （可选）运行 `src/` 中的验证脚本，核验内容的客观视角及图像链接有效性。
+3. 检查 `data/output/` 下生成的 Markdown 与 Word 文档。
+4. （可选）运行 `src/` 中的验证脚本，核验内容的客观视角、图像链接有效性以及 Word 输出完整性。
 
 ## 🛠️ 质量验证脚本
-提供了两个用于验证内容的 Python 脚本：
+提供以下用于验证与转换内容的 Python 脚本：
 - **验证图像引用有效性**：`python src/check_images.py data/input/<编号>/images data/output/<编号>_summary.md`
 - **核验客观学术人称（无第一人称）**：`python src/check_phrases.py data/output/<编号>_summary.md`
+- **核验输出结构与标题长度**：`python src/check_structure.py data/output/<编号>_summary.md`
 - **一次性执行全部校验**：`python src/validate_output.py <编号>`
+- **将 Markdown 转为 Word**：`python src/md_to_docx.py <编号>`
+- **校验 Word 输出**：`python src/check_docx.py <编号>`
 
 这些脚本在发现问题时会返回非零退出码，便于 Codex、CI 或其他自动化流程判断输出是否合格。

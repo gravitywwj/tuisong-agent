@@ -15,33 +15,35 @@ FORBIDDEN_PHRASES = [
 def check_phrases(md_file):
     """
     Scan markdown output for first-person/author-perspective phrases.
+    Returns 0 when valid, 1 when errors are found.
     """
     md_file = Path(md_file)
     if not md_file.exists():
-        print(f"❌ Markdown file not found: {md_file}")
-        return
+        print(f"ERROR: Markdown file not found: {md_file}")
+        return 1
         
     with open(md_file, "r", encoding="utf-8") as f:
         content = f.read()
 
     errors = 0
-    print("🔍 Scanning for forbidden first-person phrases...")
+    print("Scanning for forbidden first-person phrases...")
     
     for pattern in FORBIDDEN_PHRASES:
         matches = re.finditer(pattern, content, re.IGNORECASE)
         for match in matches:
             line_num = content[:match.start()].count('\n') + 1
-            print(f"  ❌ Line {line_num}: found forbidden phrase '{match.group()}'")
+            print(f"  ERROR: Line {line_num}: found forbidden phrase '{match.group()}'")
             errors += 1
             
     if errors == 0:
-        print("✅ No first-person phrasing detected. Academic tone is preserved.")
+        print("OK: No first-person phrasing detected. Academic tone is preserved.")
     else:
-        print(f"⚠️ Found {errors} instances of inappropriate phrasing that need rewriting!")
+        print(f"ERROR: Found {errors} instances of inappropriate phrasing that need rewriting!")
+    return 1 if errors else 0
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python check_phrases.py <path_to_output_md>")
         sys.exit(1)
         
-    check_phrases(sys.argv[1])
+    sys.exit(check_phrases(sys.argv[1]))

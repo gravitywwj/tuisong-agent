@@ -4,9 +4,9 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .tmp/
-# Data folders - exclude input papers, outputs, and templates
-data/input/*/
-data/output/*/
-data/example\ format/*/
+# Data folders - exclude input papers, generated outputs, and local templates
+data/input/*
+data/output/*
+data/example format/*
 !data/input/.gitkeep
 !data/output/.gitkeep

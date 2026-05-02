@@ -156,6 +156,45 @@ def clean_inline_text(text):
     return text.strip()
 
 
+RICH_TOKEN_RE = re.compile(
+    r"Δδ18O|δ18O|NH4\+|NO[23]-|N2O|H2O|CO2|CH4|O2|m3"
+)
+
+
+def rich_text_segments(text):
+    position = 0
+    for match in RICH_TOKEN_RE.finditer(text):
+        if match.start() > position:
+            yield text[position : match.start()], None
+
+        token = match.group(0)
+        if token in {"Δδ18O", "δ18O"}:
+            prefix = token[:-3]
+            yield prefix, None
+            yield "18", "superscript"
+            yield "O", None
+        elif token == "NH4+":
+            yield "NH", None
+            yield "4", "subscript"
+            yield "+", "superscript"
+        elif token.startswith("NO") and token.endswith("-"):
+            yield "NO", None
+            yield token[2], "subscript"
+            yield "-", "superscript"
+        elif token == "m3":
+            yield "m", None
+            yield "3", "superscript"
+        else:
+            # Binary formulas such as N2O, O2, H2O, CO2 and CH4.
+            for char in token:
+                yield char, "subscript" if char.isdigit() else None
+
+        position = match.end()
+
+    if position < len(text):
+        yield text[position:], None
+
+
 def normalize_caption(caption):
     caption = clean_inline_text(caption)
     caption = re.sub(r"^(图\s*\d+)\s*[：:]\s*", r"\1 ", caption)
@@ -367,14 +406,60 @@ def add_graphical_abstract(doc, graphical_abstract):
     add_caption(doc, graphical_abstract.get("caption") or "图文摘要")
 
 
+def find_input_cover_image(image_dir):
+    if not image_dir.exists():
+        return None
+
+    exact_names = [
+        "封面.png",
+        "封面.jpg",
+        "封面.jpeg",
+        "cover.png",
+        "cover.jpg",
+        "cover.jpeg",
+        "Cover.png",
+        "Cover.jpg",
+        "Cover.jpeg",
+    ]
+    for name in exact_names:
+        path = image_dir / name
+        if path.exists():
+            return path
+
+    for path in sorted(image_dir.iterdir()):
+        if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg"}:
+            if "封面" in path.stem or "cover" in path.stem.lower():
+                return path
+    return None
+
+
 def add_heading(doc, text, level):
     style = "Heading 1" if level <= 2 else "Heading 2"
     if level >= 3:
         style = "Heading 2"
     paragraph = doc.add_paragraph(style=style)
     paragraph.paragraph_format.first_line_indent = Cm(0)
-    run = paragraph.add_run(text)
-    set_run_font(run, east_asia="黑体", ascii_font="Times New Roman", size=14 if style == "Heading 1" else 12, bold=True)
+    add_rich_text(
+        paragraph,
+        text,
+        east_asia="黑体",
+        ascii_font="Times New Roman",
+        size=14 if style == "Heading 1" else 12,
+        bold=True,
+    )
+    return paragraph
+
+
+def add_rich_text(paragraph, text, east_asia="宋体", ascii_font="Times New Roman", size=12, bold=None):
+    for segment, vertical_align in rich_text_segments(text):
+        if not segment:
+            continue
+        run = paragraph.add_run(segment)
+        set_run_font(run, east_asia=east_asia, ascii_font=ascii_font, size=size, bold=bold)
+        if vertical_align == "subscript":
+            run.font.subscript = True
+        elif vertical_align == "superscript":
+            run.font.superscript = True
     return paragraph
 
 
@@ -384,8 +469,7 @@ def add_normal_paragraph(doc, text, first_line=True):
     paragraph.paragraph_format.first_line_indent = Cm(0.8467) if first_line else Cm(0)
     paragraph.paragraph_format.line_spacing = Pt(20)
     paragraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-    run = paragraph.add_run(text)
-    set_run_font(run, east_asia="宋体", ascii_font="Times New Roman", size=12)
+    add_rich_text(paragraph, text, east_asia="宋体", ascii_font="Times New Roman", size=12)
     return paragraph
 
 
@@ -395,8 +479,7 @@ def add_caption(doc, caption):
     paragraph.paragraph_format.first_line_indent = Cm(0)
     paragraph.paragraph_format.line_spacing = Pt(12)
     paragraph.paragraph_format.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
-    run = paragraph.add_run(caption)
-    set_run_font(run, east_asia="宋体", ascii_font="Times New Roman", size=10.5)
+    add_rich_text(paragraph, caption, east_asia="宋体", ascii_font="Times New Roman", size=10.5)
     return paragraph
 
 
@@ -587,8 +670,11 @@ def convert_one(paper_id, args):
     configure_template_like_document(doc)
     doc.core_properties.title = title_zh or title_en
     graphical_abstract = None if args.no_graphical_abstract else find_graphical_abstract(input_dir, image_dir, summary_text)
+    input_cover_path = None if args.no_cover else find_input_cover_image(image_dir)
 
-    if args.generate_cover and not args.no_cover:
+    if input_cover_path:
+        add_picture(doc, input_cover_path)
+    elif args.generate_cover and not args.no_cover:
         cover_path = create_cover_image(
             paper_id, title_en, title_zh, doi_url, authors, Path(".tmp/docx_cover")
         )
